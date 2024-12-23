@@ -1,9 +1,17 @@
 {
   "name": "be-node-portfolio",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "A TypeScript-powered Node.js backend application designed for managing and exposing portfolio-related APIs with GitHub integration and robust logging.",
   "license": "MIT",
-  "keywords": [],
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "api",
+    "github",
+    "portfolio",
+    "swagger",
+    "logging"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/5h1ngy/be-node-portfolio.git"
