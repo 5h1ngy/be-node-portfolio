@@ -1,6 +1,7 @@
 dist
 docs
 data
+.env.*
 
 # Logs
 logs

@@ -1,20 +1,9 @@
 {
   "name": "be-node-portfolio",
   "version": "1.0.0",
-  "description": "RESTful API for managing anime details, tags, and related metadata using Sequelize with SQLite.",
+  "description": "",
   "license": "MIT",
-  "keywords": [
-    "anime",
-    "api",
-    "anime-details",
-    "tags",
-    "sequelize",
-    "sqlite",
-    "restful",
-    "typescript",
-    "openapi",
-    "swagger"
-  ],
+  "keywords": [],
   "repository": {
     "type": "git",
     "url": "https://github.com/5h1ngy/be-node-portfolio.git"
@@ -39,6 +28,7 @@
     "update": "yarn up '*@latest'"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "class-validator-jsonschema": "^5.0.1",
