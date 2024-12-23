@@ -11,33 +11,51 @@ import { routingControllersToSpec } from "routing-controllers-openapi";
 import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 import { getFromContainer, MetadataStorage } from "class-validator";
 
-import { connect, disconnect } from "@/config/database";
 import { errorHandler } from "@/middleware/errorHandler";
-import { setupHttpLogging, logInfo, logError, logWarn } from "@/shared/logger";
+import { setupHttpLogging, logWarn } from "@/shared/logger";
 
 import { GithubController } from "@/controllers/GithubController";
 import { HealthController } from "@/controllers/HealthController";
 
 /**
- * Main application class.
- * Initializes the Express server, controllers, and middleware.
+ * @class App
+ *
+ * Main application class responsible for initializing and configuring the Express server.
+ * This includes setting up middleware, controllers, Swagger documentation, and global error handling.
  */
 class App {
+    /**
+     * Singleton instance of the application.
+     * @private
+     * @static
+     * @type {App}
+     */
     private static instance: App;
+
+    /**
+     * The Express application instance.
+     * @public
+     * @type {express.Application}
+     */
     public app: express.Application;
 
+    /**
+     * Private constructor to enforce singleton pattern.
+     */
     private constructor() {
         this.app = express();
         this.config();
         this.setupControllers();
         this.setupSwagger();
         this.setupErrorHandling();
-        this.connectDatabase();
         this.handleProcessEvents();
     }
 
     /**
      * Retrieves the singleton instance of the application.
+     * Ensures only one instance of the App class is created.
+     * 
+     * @returns {App} The singleton application instance.
      */
     public static getInstance(): App {
         if (!App.instance) {
@@ -47,7 +65,10 @@ class App {
     }
 
     /**
-     * Configures middlewares such as Helmet, CORS, and HTTP logging.
+     * Configures middlewares such as Helmet for security, CORS for cross-origin requests,
+     * and HTTP logging for request monitoring.
+     * 
+     * @private
      */
     private config(): void {
         useContainer(Container);
@@ -71,7 +92,9 @@ class App {
     }
 
     /**
-     * Sets up the application controllers with routing-controllers.
+     * Configures routing-controllers to initialize and bind application controllers.
+     * 
+     * @private
      */
     private setupControllers(): void {
         useExpressServer(this.app, {
@@ -89,7 +112,12 @@ class App {
     }
 
     /**
-     * Configures Swagger documentation for the API.
+     * Configures Swagger UI documentation for the API endpoints.
+     * 
+     * The OpenAPI specification is generated dynamically based on routing-controllers metadata
+     * and class-validator schemas.
+     * 
+     * @private
      */
     private setupSwagger(): void {
         const storage = getMetadataArgsStorage();
@@ -120,30 +148,22 @@ class App {
     }
 
     /**
-     * Sets up global error handling middleware.
+     * Sets up global error handling middleware to catch and process application errors.
+     * 
+     * @private
      */
     private setupErrorHandling(): void {
         this.app.use(errorHandler);
     }
 
     /**
-     * Establishes the database connection.
-     */
-    private connectDatabase(): void {
-        connect()
-            .then(() => {
-                const PORT = process.env.SERVER_PORT || 3000;
-                this.app.listen(PORT, () => logInfo(`Server running on http://localhost:${PORT}`));
-            })
-            .catch((err) => logError(err));
-    }
-
-    /**
-     * Handles process events for graceful shutdown.
+     * Configures process event listeners for graceful application shutdown.
+     * Logs a warning message before exiting.
+     * 
+     * @private
      */
     private handleProcessEvents(): void {
         process.on("SIGINT", async () => {
-            await disconnect();
             logWarn("Server shutting down...");
             process.exit(0);
         });
