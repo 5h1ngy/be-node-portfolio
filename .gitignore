@@ -1,6 +1,7 @@
 dist
 docs
 data
+certs
 .env.*
 
 # Logs

@@ -1,6 +1,6 @@
 import { JsonController, Get } from "routing-controllers";
 import { Inject, Service } from "typedi";
-import { logInfo } from "@/shared/logger";
+import { logInfo, logError } from "@/shared/logger";
 import { GithubService } from "@/services/GithubService";
 import { RepoDto } from "@/dtos/RepoDto";
 import { SimpleResultsDto } from "@/dtos/ResultDto";
@@ -21,9 +21,7 @@ export class GithubController {
    *
    * @param {GithubService} githubService - The service used to interact with GitHub data.
    */
-  constructor(@Inject() private githubService: GithubService) {
-
-  }
+  constructor(@Inject() private githubService: GithubService) { }
 
   /**
    * GET /github/repos
@@ -48,7 +46,14 @@ export class GithubController {
    */
   @Get("/repos")
   async getRepositories(): Promise<SimpleResultsDto<RepoDto[]>> {
-    logInfo(`Fetching all repos`);
-    return await this.githubService.getAll();
+    try {
+      logInfo("Starting to fetch repositories from GithubService.");
+      const result = await this.githubService.getAll();
+      logInfo("Successfully fetched repositories.");
+      return result;
+    } catch (error) {
+      logError(`Failed to fetch repositories: ${(error as Error).message}`);
+      throw error;
+    }
   }
 }

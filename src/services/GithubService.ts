@@ -1,18 +1,35 @@
 import { Service } from "typedi";
-import AnimeDetails from "@/models/AnimeDetails";
 import { RepoDto } from "@/dtos/RepoDto";
-// import { AnimeDetailsDto } from "@/dtos/AnimeDetailsDto";
-import { SimpleResultDto, SimpleResultsDto } from "@/dtos/ResultDto";
-import { Sequelize } from "sequelize";
+import { SimpleResultsDto } from "@/dtos/ResultDto";
 import axios, { AxiosHeaders, RawAxiosRequestHeaders } from "axios";
-import { logError, logWarn } from "@/shared/logger";
+import { logError, logInfo } from "@/shared/logger";
 
-
+/**
+ * @class GithubService
+ * 
+ * Service for interacting with the GitHub API to fetch repository data.
+ * This class handles API requests, processes responses, and formats data into DTOs.
+ */
 @Service()
 export class GithubService {
-  private _headers: (RawAxiosRequestHeaders & Record<string, any>) | AxiosHeaders = {}
-  private _user: string
+  /**
+   * Headers used for GitHub API requests.
+   * Includes API versioning, content type, and authorization token.
+   * @private
+   * @type {(RawAxiosRequestHeaders & Record<string, any>) | AxiosHeaders}
+   */
+  private _headers: (RawAxiosRequestHeaders & Record<string, any>) | AxiosHeaders = {};
 
+  /**
+   * GitHub username whose repositories will be fetched.
+   * @private
+   * @type {string}
+   */
+  private _user: string;
+
+  /**
+   * Initializes the service with necessary headers and username from environment variables.
+   */
   constructor() {
     this._headers["X-GitHub-Api-Version"] = "2022-11-28";
     this._headers["Accept"] = "application/vnd.github+json";
@@ -20,104 +37,72 @@ export class GithubService {
     this._user = process.env.GITHUB_USER!;
   }
 
+  /**
+   * Fetches all repositories for the configured GitHub user.
+   * This method retrieves repository data, including the README and logo (if available),
+   * and formats it into DTOs for further processing.
+   * 
+   * @returns {Promise<SimpleResultsDto<RepoDto[]>>} A promise resolving to a DTO containing an array of repositories.
+   * @example
+   * const results = await githubService.getAll();
+   * console.log(results.data); // Array of RepoDto
+   */
   async getAll(): Promise<SimpleResultsDto<RepoDto[]>> {
     const repos: RepoDto[] = [];
 
     try {
+      logInfo("Fetching all repositories from GitHub API");
 
+      // Fetch repositories from the GitHub API
       const { data } = await axios.get(
         `https://api.github.com/users/${this._user}/repos`,
         { headers: this._headers }
-      )
+      );
+
+      logInfo(`Successfully fetched ${data.length} repositories`);
 
       for (const repo of data) {
-
         try {
+          if (repo.description === null) throw new Error("Repository description is missing");
 
-          if (repo.description === null) throw new Error("missing description")
+          logInfo(`Fetching README and logo for repository: ${repo.name}`);
 
+          // Fetch README data
           const { data: readmeData } = await axios.get(
             `https://api.github.com/repos/${this._user}/${repo.name}/readme`,
             { headers: this._headers }
-          )
+          );
 
+          // Fetch logo data
           const { data: logoData } = await axios.get(
             `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/logo.png`,
             { headers: this._headers }
-          )
+          );
 
-          repos.push(new RepoDto(
-            repo.id, repo.created_at, repo.updated_at,
-            repo.git_url, repo.name, repo.topics, repo.description,
-            "data:image/png;base64," + logoData.content, readmeData.content,
-          ));
+          repos.push(
+            new RepoDto(
+              repo.id,
+              repo.created_at,
+              repo.updated_at,
+              repo.git_url,
+              repo.name,
+              repo.topics,
+              repo.description,
+              "data:image/png;base64," + logoData.content,
+              readmeData.content
+            )
+          );
 
+          logInfo(`Successfully processed repository: ${repo.name}`);
         } catch (error: any) {
-          logError(JSON.stringify(error))
-          // if (error.status! === 404) {
-
-          //   repos.push(new RepoDto(
-          //     repo.id, repo.created_at, repo.updated_at,
-          //     repo.git_url, repo.name, repo.topics, repo.description,
-          //     undefined, undefined,
-          //   ));
-          // }
+          logError(`Error processing repository ${repo.name}: ${JSON.stringify(error)}`);
         }
       }
 
       return new SimpleResultsDto<RepoDto[]>(repos);
-
     } catch (error: unknown) {
-      logError(error as string)
-
-      // In caso di errore, restituisci un valore vuoto o un'istanza di fallback
+      logError(`Failed to fetch repositories: ${(error as Error).message}`);
       return new SimpleResultsDto<RepoDto[]>([]);
     }
-
-    // Costruisci la clausola WHERE in base al parametro type
-    // const whereClause = type ? { type } : undefined;
-
-    // // Trova righe e conteggio totale dal database
-    // const { rows, count: total } = await AnimeDetails.findAndCountAll({
-    //   where: whereClause, // Applica il filtro se specificato
-    //   offset: (offset - 1) * size,
-    //   limit: size,
-    //   include: [
-    //     { association: "asset", required: false },
-    //   ],
-    //   order: [
-    //     ["year_start", "DESC NULLS LAST"],
-    //     [
-    //       Sequelize.literal(`
-    //         CASE
-    //           WHEN season = 'winter' THEN 1
-    //           WHEN season = 'spring' THEN 2
-    //           WHEN season = 'summer' THEN 3
-    //           WHEN season = 'autumn' THEN 4
-    //           ELSE 5
-    //         END
-    //     `),
-    //       "DESC" // Ordina le stagioni in ordine specificato
-    //     ],
-    //   ],
-    // });
-
-    // // Mappa le righe in un array di DTO
-    // const occurrences = rows.map((anime) => new AnimeDto(
-    //   anime.id,
-    //   anime.title || null,
-    //   anime.type || null,
-    //   anime.season || null,
-    //   anime.year_start || null,
-    //   anime.asset?.id
-    //     ? { id: anime.asset.id, thumbnail: anime.asset.thumbnail }
-    //     : null
-    // ));
-
-    // // Calcola il numero totale di pagine
-    // const totalPages = Math.ceil(total / size);
-
-    // Inizializza e restituisci un'istanza del DTO paginato
-    // return new PaginatedResultDto<AnimeDto>(occurrences, total, offset, size, totalPages);
   }
 }
