@@ -1,0 +1,84 @@
+{
+  "name": "be-node-portfolio",
+  "version": "1.0.0",
+  "description": "RESTful API for managing anime details, tags, and related metadata using Sequelize with SQLite.",
+  "license": "MIT",
+  "keywords": [
+    "anime",
+    "api",
+    "anime-details",
+    "tags",
+    "sequelize",
+    "sqlite",
+    "restful",
+    "typescript",
+    "openapi",
+    "swagger"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/5h1ngy/be-node-portfolio.git"
+  },
+  "author": "5h1ngy",
+  "engines": {
+    "node": ">=20.18.0",
+    "yarn": ">=4.5.1"
+  },
+  "packageManager": "yarn@4.5.1",
+  "type": "commonjs",
+  "bin": {
+    "anime-api": "./dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only --notify false -r tsconfig-paths/register src/index.ts",
+    "build": "cross-env NODE_ENV=production tsc && tsc-alias",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "docs": "typedoc",
+    "clean": "rm -rfdv node_modules dist docs data logs",
+    "update": "yarn up '*@latest'"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "class-validator-jsonschema": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "helmet": "^8.0.0",
+    "module-alias": "^2.2.3",
+    "morgan": "^1.10.0",
+    "openapi3-ts": "^4.4.0",
+    "reflect-metadata": "^0.2.2",
+    "routing-controllers": "^0.10.4",
+    "routing-controllers-openapi": "^4.0.0",
+    "sequelize": "^6.37.5",
+    "sequelize-typescript": "^2.1.6",
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "typedi": "^0.10.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/helmet": "^4.0.0",
+    "@types/module-alias": "^2.0.4",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.10.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.7",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.16.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.10",
+    "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.27.2",
+    "typescript": "^5.7.2"
+  }
+}
