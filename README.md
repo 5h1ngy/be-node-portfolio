@@ -1,8 +1,7 @@
 # **be-node-portfolio**
 
 <p align="center">
-  <img src="./assets/logo.png" alt="logo" 
-  style="height: 350px; object-fit: contain;">
+  <img src="./assets/logo.png" alt="logo" width="512">
 </p>
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -13,9 +12,7 @@
 A TypeScript-powered Node.js backend application designed for managing and exposing portfolio-related APIs. This repository follows modern development practices and ensures scalability, maintainability, and security.
 
 <p align="center">
-   <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-      <img src="./assets/preview.png" alt="Preview Desktop Light" style="height: 150px; object-fit: contain;">
-   </div>
+      <img src="./assets/preview.png" style="height: 350px; object-fit: contain;">
 </p>
 
 ## **Table of Contents**
