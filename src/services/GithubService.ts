@@ -62,41 +62,56 @@ export class GithubService {
       logInfo(`Successfully fetched ${data.length} repositories`);
 
       for (const repo of data) {
+        let readmeData = undefined;
+        let logoData = undefined;
+
         try {
           if (repo.description === null) throw new Error("Repository description is missing");
 
-          logInfo(`Fetching README and logo for repository: ${repo.name}`);
+          logInfo(`Fetching README for repository: ${repo.name}`);
 
-          // Fetch README data
-          const { data: readmeData } = await axios.get(
+          const { data } = await axios.get(
             `https://api.github.com/repos/${this._user}/${repo.name}/readme`,
             { headers: this._headers }
           );
 
+          readmeData = data;
+
+        } catch (error: any) {
+          logError(`Error processing README repository ${repo.name}: ${JSON.stringify(error)}`);
+        }
+
+        try {
+          if (repo.description === null) throw new Error("Repository description is missing");
+
+          logInfo(`Fetching logo for repository: ${repo.name}`);
+
           // Fetch logo data
-          const { data: logoData } = await axios.get(
+          const { data } = await axios.get(
             `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/logo.png`,
             { headers: this._headers }
           );
 
-          repos.push(
-            new RepoDto(
-              repo.id,
-              repo.created_at,
-              repo.updated_at,
-              repo.git_url,
-              repo.name,
-              repo.topics,
-              repo.description,
-              "data:image/png;base64," + logoData.content,
-              readmeData.content
-            )
-          );
-
-          logInfo(`Successfully processed repository: ${repo.name}`);
+          logoData = data;
         } catch (error: any) {
-          logError(`Error processing repository ${repo.name}: ${JSON.stringify(error)}`);
+          logError(`Error processing logo repository ${repo.name}: ${JSON.stringify(error)}`);
         }
+
+        repos.push(
+          new RepoDto(
+            repo.id,
+            repo.created_at,
+            repo.updated_at,
+            repo.git_url,
+            repo.name,
+            repo.topics,
+            repo.description,
+            logoData?.content ? "data:image/png;base64," + logoData.content : logoData,
+            readmeData?.content ? readmeData.content : readmeData
+          )
+        );
+
+        logInfo(`Successfully processed repository: ${repo.name}`);
       }
 
       return new SimpleResultsDto<RepoDto[]>(repos);
