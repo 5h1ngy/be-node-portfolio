@@ -66,9 +66,9 @@ export class GithubService {
         let logoData = undefined;
         let linksData = undefined;
 
-        if (repo.description === null) {
-          throw new Error("Repository description is missing");
-        }
+        // if (repo.description === null) {
+        //   continue;
+        // }
 
         try {
 
@@ -125,7 +125,8 @@ export class GithubService {
             repo.topics,
             repo.description,
             logoData?.content ? "data:image/png;base64," + logoData.content : logoData,
-            readmeData?.content ? readmeData.content : readmeData
+            readmeData?.content ? readmeData.content : readmeData,
+            linksData?.content ? linksData.content : linksData,
           )
         );
 

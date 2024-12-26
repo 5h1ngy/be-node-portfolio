@@ -77,6 +77,14 @@ export class RepoDto {
   readme?: string;
 
   /**
+   * Optional Links content of the repository (base64).
+   * @example "base64 encoded string"
+   */
+  @IsOptional()
+  @IsString()
+  links?: string;
+
+  /**
    * Constructor to initialize the RepoDto.
    * @param _id - Unique identifier of the repository.
    * @param created - Creation timestamp in ISO 8601 format.
@@ -97,7 +105,8 @@ export class RepoDto {
     topics: string[],
     description?: string,
     thumbnail?: string,
-    readme?: string
+    readme?: string,
+    links?: string
   ) {
     this._id = _id;
     this.created = created;
@@ -108,5 +117,6 @@ export class RepoDto {
     this.description = description;
     this.thumbnail = thumbnail;
     this.readme = readme;
+    this.links = links;
   }
 }
