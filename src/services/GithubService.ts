@@ -64,9 +64,13 @@ export class GithubService {
       for (const repo of data) {
         let readmeData = undefined;
         let logoData = undefined;
+        let linksData = undefined;
+
+        if (repo.description === null) {
+          throw new Error("Repository description is missing");
+        }
 
         try {
-          if (repo.description === null) throw new Error("Repository description is missing");
 
           logInfo(`Fetching README for repository: ${repo.name}`);
 
@@ -82,7 +86,6 @@ export class GithubService {
         }
 
         try {
-          if (repo.description === null) throw new Error("Repository description is missing");
 
           logInfo(`Fetching logo for repository: ${repo.name}`);
 
@@ -97,12 +100,27 @@ export class GithubService {
           logError(`Error processing logo repository ${repo.name}: ${JSON.stringify(error)}`);
         }
 
+        try {
+
+          logInfo(`Fetching links for repository: ${repo.name}`);
+
+          // Fetch links data
+          const { data } = await axios.get(
+            `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/links.json`,
+            { headers: this._headers }
+          );
+
+          linksData = data;
+        } catch (error: any) {
+          logError(`Error processing links repository ${repo.name}: ${JSON.stringify(error)}`);
+        }
+
         repos.push(
           new RepoDto(
             repo.id,
             repo.created_at,
             repo.updated_at,
-            repo.git_url,
+            repo.html_url,
             repo.name,
             repo.topics,
             repo.description,

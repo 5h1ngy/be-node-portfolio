@@ -113,7 +113,7 @@ class App {
                 GithubController,
             ],
             defaultErrorHandler: false,
-            routePrefix: "/api",
+            routePrefix: "/api/be-node-portfolio",
         });
 
         useExpressServer(this.app, {

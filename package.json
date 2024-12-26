@@ -28,10 +28,10 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only --notify false -r tsconfig-paths/register src/index.ts",
-    "build": "cross-env NODE_ENV=production tsc && tsc-alias",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
-    "docs": "typedoc",
+    "start:dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only --notify false -r tsconfig-paths/register src/index.ts",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
+    "build:prod": "cross-env NODE_ENV=production tsc && tsc-alias",
+    "build:docs": "typedoc",
     "clean": "rm -rfdv node_modules dist docs data logs",
     "update": "yarn up '*@latest'"
   },
