@@ -141,7 +141,7 @@ class App {
         const spec = routingControllersToSpec(
             storage,
             {
-                routePrefix: "/api",
+                routePrefix: "/api/be-node-portfolio",
             },
             {
                 components: {
@@ -157,7 +157,7 @@ class App {
             }
         );
 
-        this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
+        this.app.use("/api/be-node-portfolio/swagger", swaggerUi.serve, swaggerUi.setup(spec));
     }
 
     /**
