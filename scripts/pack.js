@@ -17,6 +17,7 @@ const itemsToZip = [
     "package.json",
     "yarn.lock",
     ".yarn-cache",
+    "node_modules",
     ".yarnrc.yml",
     "certs",
     "dist",
