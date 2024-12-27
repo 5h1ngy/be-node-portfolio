@@ -16,6 +16,7 @@ const archiver = require("archiver");
 const itemsToZip = [
     "package.json",
     "yarn.lock",
+    "node_modules",
     ".yarn-cache",
     ".yarnrc.yml",
     "certs",
@@ -87,6 +88,8 @@ function main() {
 
         // Finalizziamo l'archivio
         archive.finalize();
+
+        execSync("yarn install", { stdio: "inherit" });
     } catch (err) {
         console.error("Errore durante l'esecuzione dello script:", err);
         process.exit(1);
