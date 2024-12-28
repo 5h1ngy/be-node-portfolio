@@ -20,6 +20,7 @@ const itemsToZip = [
     ".yarn-cache",
     ".yarnrc.yml",
     "certs",
+    "data",
     "dist",
 ];
 

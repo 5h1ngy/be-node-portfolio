@@ -3,6 +3,8 @@ import { RepoDto } from "@/dtos/RepoDto";
 import { SimpleResultsDto } from "@/dtos/ResultDto";
 import axios, { AxiosHeaders, RawAxiosRequestHeaders } from "axios";
 import { logError, logInfo } from "@/shared/logger";
+import Repos from "@/models/Repos";
+import { DateTime } from "luxon";
 
 /**
  * @class GithubService
@@ -48,75 +50,72 @@ export class GithubService {
    * console.log(results.data); // Array of RepoDto
    */
   async getAll(): Promise<SimpleResultsDto<RepoDto[]>> {
-    const repos: RepoDto[] = [];
+    // Fetch data from the database
+    const data = await Repos.findAll();
 
-    try {
-      logInfo("Fetching all repositories from GitHub API");
+    // Verifica se `data` è vuoto o contiene elementi non aggiornati da un'ora
+    const isStale = data.some((repo) => {
+      const updatedDate = DateTime.fromISO(repo.updatedAt); // Parso la data ISO con Luxon
+      const oneHourAgo = DateTime.now().minus({ hours: 1 }); // Data di un'ora fa
+      return updatedDate < oneHourAgo; // Confronto tra DateTime
+    });
 
-      // Fetch repositories from the GitHub API
-      const { data } = await axios.get(
-        `https://api.github.com/users/${this._user}/repos`,
-        { headers: this._headers }
-      );
+    if (data.length === 0 || isStale) {
+      logInfo("Data is empty or stale. Fetching fresh data from GitHub API...");
 
-      logInfo(`Successfully fetched ${data.length} repositories`);
+      const repos: RepoDto[] = [];
 
-      for (const repo of data) {
-        let readmeData = undefined;
-        let logoData = undefined;
-        let linksData = undefined;
+      try {
+        // Fetch repositories from the GitHub API
+        const { data: apiData } = await axios.get(
+          `https://api.github.com/users/${this._user}/repos`,
+          { headers: this._headers }
+        );
 
-        // if (repo.description === null) {
-        //   continue;
-        // }
+        logInfo(`Successfully fetched ${apiData.length} repositories`);
 
-        try {
+        for (const repo of apiData) {
+          let readmeData = undefined;
+          let logoData = undefined;
+          let linksData = undefined;
 
-          logInfo(`Fetching README for repository: ${repo.name}`);
+          try {
+            // Fetch README
+            logInfo(`Fetching README for repository: ${repo.name}`);
+            const { data: readme } = await axios.get(
+              `https://api.github.com/repos/${this._user}/${repo.name}/readme`,
+              { headers: this._headers }
+            );
+            readmeData = readme.content;
+          } catch (error) {
+            logError(`Error fetching README for ${repo.name}: ${error}`);
+          }
 
-          const { data } = await axios.get(
-            `https://api.github.com/repos/${this._user}/${repo.name}/readme`,
-            { headers: this._headers }
-          );
+          try {
+            // Fetch logo
+            logInfo(`Fetching logo for repository: ${repo.name}`);
+            const { data: logo } = await axios.get(
+              `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/logo.png`,
+              { headers: this._headers }
+            );
+            logoData = logo.content;
+          } catch (error) {
+            logError(`Error fetching logo for ${repo.name}: ${error}`);
+          }
 
-          readmeData = data;
+          try {
+            // Fetch links
+            logInfo(`Fetching links for repository: ${repo.name}`);
+            const { data: links } = await axios.get(
+              `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/links.json`,
+              { headers: this._headers }
+            );
+            linksData = links.content;
+          } catch (error) {
+            logError(`Error fetching links for ${repo.name}: ${error}`);
+          }
 
-        } catch (error: any) {
-          logError(`Error processing README repository ${repo.name}: ${JSON.stringify(error)}`);
-        }
-
-        try {
-
-          logInfo(`Fetching logo for repository: ${repo.name}`);
-
-          // Fetch logo data
-          const { data } = await axios.get(
-            `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/logo.png`,
-            { headers: this._headers }
-          );
-
-          logoData = data;
-        } catch (error: any) {
-          logError(`Error processing logo repository ${repo.name}: ${JSON.stringify(error)}`);
-        }
-
-        try {
-
-          logInfo(`Fetching links for repository: ${repo.name}`);
-
-          // Fetch links data
-          const { data } = await axios.get(
-            `https://api.github.com/repos/${this._user}/${repo.name}/contents/assets/links.json`,
-            { headers: this._headers }
-          );
-
-          linksData = data;
-        } catch (error: any) {
-          logError(`Error processing links repository ${repo.name}: ${JSON.stringify(error)}`);
-        }
-
-        repos.push(
-          new RepoDto(
+          const repoDto = new RepoDto(
             repo.id,
             repo.created_at,
             repo.updated_at,
@@ -124,19 +123,73 @@ export class GithubService {
             repo.name,
             repo.topics,
             repo.description,
-            logoData?.content ? "data:image/png;base64," + logoData.content : logoData,
-            readmeData?.content ? readmeData.content : readmeData,
-            linksData?.content ? linksData.content : linksData,
-          )
-        );
+            logoData ? `data:image/png;base64,${logoData}` : undefined,
+            readmeData || undefined,
+            linksData || undefined
+          );
 
-        logInfo(`Successfully processed repository: ${repo.name}`);
+          repos.push(repoDto);
+
+          // Verifica se esiste un repository con lo stesso githubId
+          const existingRepo = await Repos.findOne({ where: { githubId: repoDto._id } });
+
+          if (existingRepo) {
+            existingRepo.topics = repoDto.topics; // Imposta i topics usando il setter
+            existingRepo.created = repoDto.created;
+            existingRepo.updated = repoDto.updated;
+            existingRepo.url = repoDto.url;
+            existingRepo.title = repoDto.title;
+            existingRepo.description = repoDto.description || undefined;
+            existingRepo.thumbnail = repoDto.thumbnail || undefined;
+            existingRepo.readme = repoDto.readme || undefined;
+            existingRepo.links = repoDto.links || undefined;
+
+            // Salva l'istanza per applicare i cambiamenti
+            await existingRepo.save();
+            logInfo(`Updated repository: ${repoDto.title}`);
+          } else {
+            const newRepo = Repos.build();
+            newRepo.githubId = repoDto._id;
+            newRepo.topics = repoDto.topics; // Imposta i topics usando il setter
+            newRepo.created = repoDto.created;
+            newRepo.updated = repoDto.updated;
+            newRepo.url = repoDto.url;
+            newRepo.title = repoDto.title;
+            newRepo.description = repoDto.description || undefined;
+            newRepo.thumbnail = repoDto.thumbnail || undefined;
+            newRepo.readme = repoDto.readme || undefined;
+            newRepo.links = repoDto.links || undefined;
+
+            // Salva il nuovo record
+            await newRepo.save();
+            logInfo(`Created new repository: ${repoDto.title}`);
+          }
+        }
+
+        logInfo("Successfully processed all repositories");
+        return new SimpleResultsDto<RepoDto[]>(repos);
+      } catch (error) {
+        logError(`Failed to fetch repositories: ${JSON.stringify(error as Error)}`);
+        return new SimpleResultsDto<RepoDto[]>([]);
       }
-
-      return new SimpleResultsDto<RepoDto[]>(repos);
-    } catch (error: unknown) {
-      logError(`Failed to fetch repositories: ${(error as Error).message}`);
-      return new SimpleResultsDto<RepoDto[]>([]);
+    } else {
+      logInfo("Data is fresh. Returning cached data.");
+      // Restituisci i dati dalla cache del database
+      return new SimpleResultsDto<RepoDto[]>(
+        data.map((repo) => new RepoDto(
+          repo.githubId,
+          repo.created,
+          repo.updated,
+          repo.url,
+          repo.title,
+          repo.topics,
+          repo.description,
+          repo.thumbnail,
+          repo.readme,
+          repo.links
+        ))
+      );
     }
   }
+
 }

@@ -14,8 +14,9 @@ import { routingControllersToSpec } from "routing-controllers-openapi";
 import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 import { getFromContainer, MetadataStorage } from "class-validator";
 
+import { connect, disconnect } from "@/config/database";
 import { errorHandler } from "@/middleware/errorHandler";
-import { setupHttpLogging, logWarn, logInfo } from "@/shared/logger";
+import { setupHttpLogging, logWarn, logInfo, logError } from "@/shared/logger";
 
 import { GithubController } from "@/controllers/GithubController";
 import { HealthController } from "@/controllers/HealthController";
@@ -186,22 +187,34 @@ class App {
         const PORT = process.env.SERVER_PORT || 3000;
         const isHttps = process.env.HTTPS === "true";
 
-        if (isHttps) {
-            const keyPath = process.env.HTTPS_KEY_PATH || "certs/key.pem";
-            const certPath = process.env.HTTPS_CERT_PATH || "certs/cert.pem";
+        this.connectDatabase(() => {
+            if (isHttps) {
+                const keyPath = process.env.HTTPS_KEY_PATH || "certs/key.pem";
+                const certPath = process.env.HTTPS_CERT_PATH || "certs/cert.pem";
 
-            const privateKey = fs.readFileSync(path.resolve(process.cwd(), keyPath), "utf8");
-            const certificate = fs.readFileSync(path.resolve(process.cwd(), certPath), "utf8");
-            const credentials = { key: privateKey, cert: certificate };
+                const privateKey = fs.readFileSync(path.resolve(process.cwd(), keyPath), "utf8");
+                const certificate = fs.readFileSync(path.resolve(process.cwd(), certPath), "utf8");
+                const credentials = { key: privateKey, cert: certificate };
 
-            https.createServer(credentials, this.app).listen(PORT, () => {
-                logInfo(`HTTPS server running on https://localhost:${PORT}`);
-            });
-        } else {
-            this.app.listen(PORT, () => {
-                logInfo(`HTTP server running on http://localhost:${PORT}`);
-            });
-        }
+                https.createServer(credentials, this.app).listen(PORT, () => {
+                    logInfo(`HTTPS server running on https://localhost:${PORT}`);
+                });
+            } else {
+                this.app.listen(PORT, () => {
+                    logInfo(`HTTP server running on http://localhost:${PORT}`);
+                });
+            }
+        });
+
+    }
+
+    /**
+     * Establishes the database connection.
+     */
+    private connectDatabase(callback: Function): void {
+        connect()
+            .then(() => callback())
+            .catch((err) => logError(err));
     }
 
     /**
@@ -212,6 +225,7 @@ class App {
      */
     private handleProcessEvents(): void {
         process.on("SIGINT", async () => {
+            await disconnect();
             logWarn("Server shutting down...");
             process.exit(0);
         });

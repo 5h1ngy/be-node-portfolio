@@ -33,7 +33,7 @@
     "build:prod": "cross-env NODE_ENV=production tsc && tsc-alias && yarn pack:prod",
     "build:docs": "typedoc",
     "pack:prod": "node scripts/pack.js",
-    "clean": "rm -rfdv node_modules dist docs data logs .yarn",
+    "clean": "rm -rfdv node_modules build dist docs data logs .yarn .yarn-cache",
     "update": "yarn up '*@latest'"
   },
   "dependencies": {
@@ -44,6 +44,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "helmet": "^8.0.0",
+    "luxon": "^3.5.0",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
     "openapi3-ts": "^4.4.0",
@@ -63,6 +64,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/helmet": "^4.0.0",
+    "@types/luxon": "^3",
     "@types/module-alias": "^2.0.4",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.10.1",
