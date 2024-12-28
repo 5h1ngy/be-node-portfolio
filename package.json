@@ -33,7 +33,7 @@
     "build:prod": "cross-env NODE_ENV=production tsc && tsc-alias && yarn pack:prod",
     "build:docs": "typedoc",
     "pack:prod": "node scripts/pack.js",
-    "clean": "rm -rfdv node_modules build dist docs data logs .yarn .yarn-cache",
+    "clean": "rm -rfdv node_modules build dist docs logs .yarn .yarn-cache",
     "update": "yarn up '*@latest'"
   },
   "dependencies": {
