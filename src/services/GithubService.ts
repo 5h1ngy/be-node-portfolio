@@ -134,19 +134,29 @@ export class GithubService {
           const existingRepo = await Repos.findOne({ where: { githubId: repoDto._id } });
 
           if (existingRepo) {
-            existingRepo.topics = repoDto.topics; // Imposta i topics usando il setter
-            existingRepo.created = repoDto.created;
-            existingRepo.updated = repoDto.updated;
-            existingRepo.url = repoDto.url;
-            existingRepo.title = repoDto.title;
-            existingRepo.description = repoDto.description || undefined;
-            existingRepo.thumbnail = repoDto.thumbnail || undefined;
-            existingRepo.readme = repoDto.readme || undefined;
-            existingRepo.links = repoDto.links || undefined;
+            // Esegui un backup dell'istanza corrente
+            const backupRepo = { ...existingRepo.toJSON() };
 
-            // Salva l'istanza per applicare i cambiamenti
-            await existingRepo.save();
-            logInfo(`Updated repository: ${repoDto.title}`);
+            // Rimuovi l'istanza esistente
+            await existingRepo.destroy();
+            logInfo(`Deleted existing repository: ${backupRepo.title}`);
+
+            // Crea una nuova istanza basata sui dati aggiornati
+            const newRepo = Repos.build();
+            newRepo.githubId = repoDto._id;
+            newRepo.topics = repoDto.topics;
+            newRepo.created = repoDto.created;
+            newRepo.updated = repoDto.updated;
+            newRepo.url = repoDto.url;
+            newRepo.title = repoDto.title;
+            newRepo.description = repoDto.description || undefined;
+            newRepo.thumbnail = repoDto.thumbnail || undefined;
+            newRepo.readme = repoDto.readme || undefined;
+            newRepo.links = repoDto.links || undefined;
+
+            // Salva la nuova istanza
+            await newRepo.save();
+            logInfo(`Created new repository: ${repoDto.title}`);
           } else {
             const newRepo = Repos.build();
             newRepo.githubId = repoDto._id;
