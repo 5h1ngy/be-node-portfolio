@@ -3,7 +3,7 @@ import { RepoDto } from "@/dtos/RepoDto";
 import { SimpleResultsDto } from "@/dtos/ResultDto";
 import axios, { AxiosHeaders, RawAxiosRequestHeaders } from "axios";
 import { logError, logInfo } from "@/shared/logger";
-import isOneHourPassed from "@/shared/isOneHourPassed";
+import isHourPassed from "@/shared/isHourPassed";
 import Repos from "@/models/Repos";
 import { DateTime } from "luxon";
 
@@ -57,7 +57,7 @@ export class GithubService {
     // Verifica se `data` è vuoto o contiene elementi non aggiornati da un'ora
     const isStale = data.some((repo) => {
       const updatedAtISO = repo.updatedAt.toISOString();
-      return isOneHourPassed(updatedAtISO);
+      return isHourPassed(updatedAtISO);
     });
 
     if (data.length === 0 || isStale) {

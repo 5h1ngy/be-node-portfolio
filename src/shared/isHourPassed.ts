@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
  * @param dbDate - La data fornita dal database (in formato ISO 8601 o simile).
  * @returns {boolean} - True se è passata almeno un'ora, False altrimenti.
  */
-export default function isOneHourPassed(dbDate: string): boolean {
+export default function isHourPassed(dbDate: string): boolean {
   try {
     // Parsing della data fornita in Luxon DateTime
     const inputDate = DateTime.fromISO(dbDate, { zone: "utc" });
@@ -21,7 +21,7 @@ export default function isOneHourPassed(dbDate: string): boolean {
     const diffInHours = now.diff(inputDate, "hours").hours;
 
     // Restituisce true se è passata almeno un'ora
-    return diffInHours >= 1;
+    return diffInHours >= 24;
   } catch (error) {
     console.error("Errore nel confronto delle date:", error);
     return false;
